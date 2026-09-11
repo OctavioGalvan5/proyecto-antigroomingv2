@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta — Antigrooming{% endblock %}
+{% block content %}
+<h1>Crear cuenta</h1>
+<p class="lead">Registrate como padre, madre o tutor legal para vincular la cuenta de WhatsApp del menor bajo tu responsabilidad.</p>
+
+<form method="post" class="form">
+  <label>
+    <span>Email</span>
+    <input type="email" name="email" required value="{{ email or '' }}" autocomplete="email">
+  </label>
+
+  <label>
+    <span>Nombre completo (opcional)</span>
+    <input type="text" name="full_name" value="{{ full_name or '' }}" autocomplete="name">
+  </label>
+
+  <label>
+    <span>Contraseña (mínimo 10 caracteres)</span>
+    <input type="password" name="password" required minlength="10" autocomplete="new-password">
+  </label>
+
+  <section class="terms-box">
+    <h3>Declaración</h3>
+    <pre class="terms-text">{{ parent_terms }}</pre>
+    <label class="checkbox">
+      <input type="checkbox" name="accept_terms" required>
+      <span>Acepto la declaración anterior.</span>
+    </label>
+  </section>
+
+  <button type="submit">Crear cuenta</button>
+</form>
+
+<p>¿Ya tenés cuenta? <a href="{{ url_for('auth.login') }}">Ingresá acá</a>.</p>
+{% endblock %}

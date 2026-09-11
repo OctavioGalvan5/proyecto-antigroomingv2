@@ -1,0 +1,63 @@
+# ==============================================================================
+# docker-compose.dev.yml — DESARROLLO LOCAL
+# ==============================================================================
+# Levanta la app + Postgres para poder trabajar sin depender de Supabase.
+#
+# Uso:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# La app queda en http://localhost:5000
+# Postgres queda en localhost:5433 (5433 para no chocar con Postgres local si hay)
+#
+# El .env NO se lee acá salvo por las variables listadas en `environment`.
+# Para setear DATABASE_URL apuntando al Postgres del compose, ya viene hardcoded
+# abajo con el hostname del servicio (`db`).
+# ==============================================================================
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: antigrooming-app-dev
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-change-me}
+      DATABASE_URL: postgresql://antigrooming:antigrooming@db:5432/antigrooming
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      # Montaje del código para hot-reload manual (reiniciar el container basta).
+      - ./:/app
+    # Sobrescribimos el CMD para modo dev con reload automático de Flask.
+    command: >
+      sh -c "python main.py"
+
+  db:
+    image: postgres:16-alpine
+    container_name: antigrooming-db-dev
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: antigrooming
+      POSTGRES_PASSWORD: antigrooming
+      POSTGRES_DB: antigrooming
+    volumes:
+      - antigrooming_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antigrooming -d antigrooming"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  antigrooming_pg_data:

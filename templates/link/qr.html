@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Escanear QR — {{ child.child_alias }}{% endblock %}
+{% block content %}
+<h1>Vinculando: {{ child.child_alias }}</h1>
+
+<div class="two-col">
+  <section class="qr-panel">
+    <h2>1. Escanear con WhatsApp del menor</h2>
+    {% if qr_base64 %}
+      <img src="{{ qr_base64 if qr_base64.startswith('data:') else 'data:image/png;base64,' + qr_base64 }}"
+           alt="Código QR de vinculación"
+           class="qr-image">
+      <p class="hint">En el celular del menor: WhatsApp → menú → "Dispositivos vinculados" → Vincular un dispositivo.</p>
+    {% else %}
+      <p class="warn">No se pudo obtener el QR ahora. Recargá la página.</p>
+    {% endif %}
+
+    <p>Estado de la conexión: <span id="conn-state" class="status">verificando…</span></p>
+  </section>
+
+  <section class="consent-panel">
+    <h2>2. Consentimiento del menor</h2>
+    <p class="lead">Mostrale esta pantalla al menor y leela con él/ella:</p>
+
+    <pre class="consent-text">{{ minor_consent_text }}</pre>
+
+    {% if child.has_active_consent %}
+      <p class="ok"><strong>Consentimiento aceptado el {{ child.consent.accepted_at.strftime('%Y-%m-%d %H:%M') }} UTC.</strong></p>
+    {% else %}
+      <form method="post" action="{{ url_for('linking.consent', child_id=child.id) }}">
+        <label class="checkbox">
+          <input type="checkbox" name="accept_consent" required>
+          <span>El menor entendió y acepta.</span>
+        </label>
+        <button type="submit">Registrar consentimiento</button>
+      </form>
+    {% endif %}
+  </section>
+</div>
+
+<hr>
+
+<form method="post" action="{{ url_for('linking.revoke', child_id=child.id) }}"
+      onsubmit="return confirm('Esto elimina la instancia y borra el vínculo. ¿Continuar?');">
+  <button type="submit" class="btn-danger">Revocar vinculación</button>
+</form>
+
+<script>
+  async function poll() {
+    try {
+      const r = await fetch("{{ url_for('linking.status', child_id=child.id) }}");
+      const s = await r.json();
+      const el = document.getElementById('conn-state');
+      el.textContent = s.monitoring_active
+        ? 'monitoreo ACTIVO'
+        : `${s.child_status} / evolution=${s.evolution_state} / consent=${s.has_consent}`;
+    } catch (e) {
+      /* ignoramos errores transitorios de polling */
+    }
+  }
+  poll();
+  setInterval(poll, 4000);
+</script>
+{% endblock %}

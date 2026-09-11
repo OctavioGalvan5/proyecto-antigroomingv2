@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Vincular hijo/a — Antigrooming{% endblock %}
+{% block content %}
+<h1>Vincular WhatsApp de un menor</h1>
+
+<div class="warning-box">
+  <strong>Antes de continuar:</strong>
+  <ul>
+    <li>Explicale al menor qué hace este sistema (leer los mensajes que le llegan y buscar señales de peligro).</li>
+    <li>Necesitás tener el celular del menor a mano para escanear el QR.</li>
+    <li>En la próxima pantalla el menor deberá aceptar el consentimiento antes de que el monitoreo se active.</li>
+  </ul>
+</div>
+
+<form method="post" class="form">
+  <label>
+    <span>Alias del hijo/a</span>
+    <input type="text" name="child_alias" required maxlength="120"
+           placeholder="Ej: Juan, Sofi"
+           value="{{ child_alias or '' }}">
+  </label>
+
+  <label>
+    <span>Edad (opcional pero recomendado)</span>
+    <input type="number" name="child_age" min="6" max="21"
+           value="{{ child_age or '' }}">
+    <small>La edad ayuda a la IA a calibrar el análisis.</small>
+  </label>
+
+  <button type="submit">Crear instancia y generar QR</button>
+</form>
+{% endblock %}

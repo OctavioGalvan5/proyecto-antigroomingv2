@@ -1,0 +1,42 @@
+# Entorno local — NUNCA commitear
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Bases y dumps
+*.sqlite
+*.sqlite3
+*.db
+*.sql.bak
+backup_*.sql
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads temporales
+uploads/
+tmp/

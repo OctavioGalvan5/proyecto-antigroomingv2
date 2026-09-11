@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Panel — Antigrooming{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Panel</h1>
+  <a href="{{ url_for('linking.new') }}" class="btn-primary">+ Vincular hijo/a</a>
+</div>
+
+{% if not children %}
+  <div class="empty">
+    <p>Todavía no vinculaste ningún WhatsApp de menor.</p>
+    <p>Antes de vincular, conversá con tu hijo/a: el sistema requiere su consentimiento para activarse.</p>
+    <a href="{{ url_for('linking.new') }}" class="btn-primary">Empezar vinculación</a>
+  </div>
+{% else %}
+  <table class="listing">
+    <thead>
+      <tr>
+        <th>Alias</th>
+        <th>Edad</th>
+        <th>Estado</th>
+        <th>Consentimiento</th>
+        <th>Creado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for child in children %}
+      <tr>
+        <td>{{ child.child_alias }}</td>
+        <td>{{ child.child_age or '—' }}</td>
+        <td><span class="status status-{{ child.status.value|lower }}">{{ child.status.value }}</span></td>
+        <td>
+          {% if child.has_active_consent %}
+            <span class="ok">Aceptado</span>
+          {% else %}
+            <span class="warn">Pendiente</span>
+          {% endif %}
+        </td>
+        <td>{{ child.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('linking.qr', child_id=child.id) }}">Ver</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

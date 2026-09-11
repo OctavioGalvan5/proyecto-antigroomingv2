@@ -1,0 +1,40 @@
+# Entorno local — NO se envía a la imagen
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Docs y planning (no se ejecutan)
+docs/
+*.md
+!README.md
+
+# Ejemplos y backups
+*.sqlite
+*.sqlite3
+*.db
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Nunca copiar la carpeta del CRM al contexto de build
+api de evolution api/

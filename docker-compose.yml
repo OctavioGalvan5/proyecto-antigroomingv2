@@ -1,0 +1,65 @@
+# ==============================================================================
+# docker-compose.yml — Producción (Dokploy / VPS)
+# ==============================================================================
+# En este compose la app usa Postgres EXTERNO (Supabase u otro), y sólo se
+# containeriza la app.
+#
+# Uso Dokploy:
+#   1. Crear "Application" tipo "Docker Compose" apuntando a este repo.
+#   2. Setear las variables de entorno en la UI (o subir .env).
+#   3. Deploy.
+#
+# Para dev local con Postgres incluido, ver `docker-compose.dev.yml`.
+# ==============================================================================
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: antigrooming:latest
+    container_name: antigrooming-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # Los valores REALES se pasan por Dokploy / archivo .env.
+      # Se listan acá solo como referencia de qué necesita el container.
+      SECRET_KEY: ${SECRET_KEY}
+      FLASK_ENV: ${FLASK_ENV:-production}
+      PORT: 5000
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL_MAIN: ${OPENAI_MODEL_MAIN:-gpt-5-mini}
+      OPENAI_MODEL_DEEP: ${OPENAI_MODEL_DEEP:-gpt-5}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-alertas@antigrooming.local}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+      MESSAGE_RETENTION_DAYS: ${MESSAGE_RETENTION_DAYS:-30}
+      ANALYZE_EVERY_N_MESSAGES: ${ANALYZE_EVERY_N_MESSAGES:-5}
+      ANALYZE_MIN_INTERVAL_MINUTES: ${ANALYZE_MIN_INTERVAL_MINUTES:-10}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/', timeout=3).status in (200,302) else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - default
+      - supabase_default
+
+# Nos unimos a la red del compose de Supabase para llegar al Postgres (`db`)
+# usando el nombre del servicio. La red la creó Supabase en su compose;
+# acá la referenciamos como `external: true`.
+# Confirmar el nombre real con: `docker network ls | grep supabase`.
+networks:
+  supabase_default:
+    external: true
+    name: supabase_default

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Mi monitoreo{% endblock %}
+{% block content %}
+<h1>Hola 👋</h1>
+<p class="lead">Este es tu panel personal. Podés ver qué se está monitoreando y desactivarlo cuando quieras.</p>
+
+<section class="card">
+  <h3>Estado</h3>
+  <ul class="kv">
+    <li>
+      <b>Monitoreo activo:</b>
+      {% if child.is_monitoring_active %}
+        <span class="pill pill-medium">SÍ</span>
+      {% else %}
+        <span class="pill pill-low">NO</span>
+      {% endif %}
+    </li>
+    <li><b>Vinculado a:</b> {{ child.linked_phone or 'aún no conectado' }}</li>
+    <li><b>Alias con el que te identifican:</b> {{ child.child_alias }}</li>
+    <li><b>Alertas generadas hasta ahora:</b> {{ total_alerts }}</li>
+    <li>
+      <b>Consentimiento:</b>
+      {% if child.has_active_consent %}
+        aceptado el {{ child.consent.accepted_at.strftime('%Y-%m-%d %H:%M') }} UTC
+      {% else %}
+        <span class="warn">revocado o pendiente</span>
+      {% endif %}
+    </li>
+  </ul>
+</section>
+
+<section class="card">
+  <h3>Texto que aceptaste</h3>
+  <pre class="consent-text">{{ consent_text }}</pre>
+</section>
+
+{% if child.has_active_consent %}
+<section class="card danger-zone">
+  <h3>Desactivar el monitoreo</h3>
+  <p>Si querés que el sistema deje de leer tus mensajes, apretá el botón. Se avisa a tus papás.</p>
+  <form method="post" action="{{ url_for('minor.revoke', token=child.minor_access_token) }}"
+        onsubmit="return confirm('¿Estás seguro/a? Va a apagarse el monitoreo y se les avisa a tus papás.');">
+    <label>
+      <span>¿Querés contar por qué? (opcional)</span>
+      <input type="text" name="reason" placeholder="Ej: prefiero hablarlo con mis papás">
+    </label>
+    <button type="submit" class="btn-danger">Desactivar monitoreo</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

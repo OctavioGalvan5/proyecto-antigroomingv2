@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Alertas — Antigrooming{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Alertas</h1>
+  <a href="{{ url_for('dashboard.index') }}">← Volver al panel</a>
+</div>
+
+<form method="get" class="filters">
+  <label>
+    Severidad
+    <select name="severity" onchange="this.form.submit()">
+      <option value="">Todas</option>
+      {% for s in ['HIGH','MEDIUM','LOW'] %}
+        <option value="{{ s }}" {% if severity_filter == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Hijo/a
+    <select name="child_id" onchange="this.form.submit()">
+      <option value="">Todos</option>
+      {% for ch in children %}
+        <option value="{{ ch.id }}" {% if child_id_filter == ch.id %}selected{% endif %}>{{ ch.child_alias }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% if not events %}
+  <div class="empty">
+    <p>Ninguna alerta hasta ahora. Es una buena noticia — o llegaron pocos mensajes todavía.</p>
+  </div>
+{% else %}
+<table class="listing">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Hijo/a</th>
+      <th>Contacto</th>
+      <th>Severidad</th>
+      <th>Categorías</th>
+      <th>Revisada</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in events %}
+    <tr class="row-sev-{{ e.severity.value|lower }}">
+      <td><small>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+      <td>{{ e.child_instance.child_alias }}</td>
+      <td>
+        {{ e.contact.display_name or e.contact.phone_jid }}
+        {% if e.contact.is_group %}<small>(grupo)</small>{% endif %}
+      </td>
+      <td><span class="pill pill-{{ e.severity.value|lower }}">{{ e.severity.value }}</span></td>
+      <td>
+        {% for cat in (e.categories or []) %}<span class="tag">{{ cat }}</span>{% endfor %}
+      </td>
+      <td>
+        {% if e.reviewed_at %}
+          <span class="ok">✔ {{ e.reviewed_at.strftime('%Y-%m-%d') }}</span>
+        {% else %}
+          <span class="warn">pendiente</span>
+        {% endif %}
+      </td>
+      <td><a href="{{ url_for('dashboard.alert_detail', event_id=e.id) }}">Ver</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

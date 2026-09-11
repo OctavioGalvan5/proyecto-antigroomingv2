@@ -40,6 +40,32 @@
 
 <hr>
 
+<section class="card">
+  <h3>Configuración del monitoreo</h3>
+  <p>
+    <b>Captura de mensajes enviados por el menor:</b>
+    {% if child.monitor_outbound %}
+      <span class="ok">ACTIVADA</span> — mejora la detección de patrones bidireccionales.
+    {% else %}
+      <span class="warn">DESACTIVADA</span> — sólo se procesan mensajes entrantes.
+    {% endif %}
+  </p>
+  <form method="post" action="{{ url_for('dashboard.child_toggle_outbound', child_id=child.id) }}">
+    <button type="submit" class="btn-secondary">
+      {% if child.monitor_outbound %}Desactivar outbound{% else %}Activar outbound{% endif %}
+    </button>
+  </form>
+</section>
+
+<section class="card">
+  <h3>Link para el menor</h3>
+  <p>Compartile este link a tu hijo/a. Le permite ver qué se está monitoreando y revocar el consentimiento cuando quiera.</p>
+  {% set portal = request.host_url.rstrip('/') + url_for('minor.portal', token=child.minor_access_token) %}
+  <code class="link-box">{{ portal }}</code>
+</section>
+
+<hr>
+
 <form method="post" action="{{ url_for('linking.revoke', child_id=child.id) }}"
       onsubmit="return confirm('Esto elimina la instancia y borra el vínculo. ¿Continuar?');">
   <button type="submit" class="btn-danger">Revocar vinculación</button>

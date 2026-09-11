@@ -12,7 +12,6 @@ si cambiamos el texto sin subir versión, perdemos trazabilidad.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime
 
 from models import ChildInstance, ConsentRecord, db, utcnow
 from config import Config
@@ -36,6 +35,28 @@ convencerte de guardar secretos o de encontrarse con vos.
 Si algo no te queda claro, pedile a tus papás que te expliquen ANTES de aceptar.
 """
 
+MINOR_CONSENT_TEXT_V2 = """\
+Hola. Tus papás o tutores activaron una herramienta que ayuda a detectar situaciones \
+peligrosas en tus chats de WhatsApp. La herramienta NO pasa tus mensajes uno por uno; \
+busca SEÑALES DE PELIGRO: gente que quiera hacerte daño, pedirte fotos, convencerte de \
+guardar secretos, o de encontrarse con vos.
+
+- Qué se lee:
+  * Mensajes que TE LLEGAN a WhatsApp (texto).
+  * Mensajes que VOS ENVIÁS (texto), para entender el contexto completo de la conversación.
+    (Tus papás pueden desactivar esto en cualquier momento desde su panel.)
+  * Por ahora NO se leen audios ni imágenes.
+- Qué ven tus papás: solo ALERTAS si el sistema detecta algo raro, y un extracto \
+  chico del chat que las disparó. NO ven todas tus conversaciones.
+- Cuánto se guarda: los mensajes se borran automáticamente a los 30 días.
+- Cuándo se activa: recién cuando aceptás vos y escaneás el QR. Sin tu aceptación, \
+  el sistema no lee nada.
+- Podés pedir que se apague en cualquier momento entrando al link que te dieron. \
+  Cuando lo hagas, se avisa a tus papás y al equipo del producto.
+
+Si algo no te queda claro, pedile a tus papás que te expliquen ANTES de aceptar.
+"""
+
 PARENT_TERMS_TEXT_V1 = """\
 Al usar este servicio declaro que:
 
@@ -52,18 +73,49 @@ Al usar este servicio declaro que:
    sean necesarios.
 """
 
+PARENT_TERMS_TEXT_V2 = """\
+Al usar este servicio declaro que:
+
+1. Soy responsable legal (padre, madre o tutor) del menor cuya cuenta voy a vincular.
+2. Le expliqué al menor qué hace esta herramienta y le voy a mostrar la pantalla \
+   de consentimiento en su dispositivo. No voy a intentar vincularlo sin su conocimiento.
+3. Entiendo que el sistema puede opcionalmente procesar también los mensajes que el menor \
+   envía (para mejorar la detección de patrones bidireccionales, ver ADR-0008). \
+   Esa opción es toggleable por instancia y viene ACTIVADA por default. Puedo desactivarla \
+   en cualquier momento desde el panel.
+4. Entiendo que este sistema NO reemplaza el diálogo con mi hijo/a ni la denuncia \
+   policial ante hechos concretos.
+5. Entiendo que la detección por IA tiene falsos positivos y falsos negativos: \
+   una alerta no prueba un delito, y la ausencia de alerta no garantiza seguridad.
+6. Entiendo que solo veré señales de riesgo (alertas) con un extracto acotado, no la \
+   conversación completa del menor. Es una decisión deliberada para respetar su privacidad.
+7. Los datos del menor se tratan bajo la Ley 25.326 y solo se conservan mientras sean \
+   necesarios (30 días para mensajes por default).
+"""
+
+
+_MINOR_CONSENT_TEXTS = {
+    "v1-2026-09": MINOR_CONSENT_TEXT_V1,
+    "v2-2026-09": MINOR_CONSENT_TEXT_V2,
+}
+
+_PARENT_TERMS_TEXTS = {
+    "v1-2026-09": PARENT_TERMS_TEXT_V1,
+    "v2-2026-09": PARENT_TERMS_TEXT_V2,
+}
+
 
 def get_minor_consent_text(version: str | None = None) -> str:
     version = version or Config.CONSENT_TEXT_VERSION
-    if version == "v1-2026-09":
-        return MINOR_CONSENT_TEXT_V1
+    if version in _MINOR_CONSENT_TEXTS:
+        return _MINOR_CONSENT_TEXTS[version]
     raise ValueError(f"Versión de consentimiento desconocida: {version}")
 
 
 def get_parent_terms_text(version: str | None = None) -> str:
     version = version or Config.TERMS_TEXT_VERSION
-    if version == "v1-2026-09":
-        return PARENT_TERMS_TEXT_V1
+    if version in _PARENT_TERMS_TEXTS:
+        return _PARENT_TERMS_TEXTS[version]
     raise ValueError(f"Versión de términos desconocida: {version}")
 
 

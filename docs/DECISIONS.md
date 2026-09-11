@@ -81,6 +81,21 @@ Log append-only. Cada decisión describe contexto, opción elegida, alternativas
 
 ---
 
+## ADR-0008 — Monitoreo de mensajes salientes: toggleable, default ON
+
+**Fecha**: 2026-09-11
+**Contexto**: El pipeline de análisis originalmente proponía capturar solo mensajes ENTRANTES para minimizar la exposición del menor. Durante pruebas quedó claro que el grooming es una **dinámica bidireccional**: sin ver cómo responde el menor, se pierden señales clave (aislamiento activo, coerción efectiva, cambio de tono). Además el principio de "el padre solo ve extractos, no el chat" sigue cubriendo la exposición al monitor humano.
+**Decisión**: Se agrega `ChildInstance.monitor_outbound` (bool, default `TRUE`). Cuando está en `TRUE`, los mensajes que el hijo envía se persisten con `direction=OUTBOUND` y el LLM los ve como contexto. El padre puede desactivarlo por instancia desde el panel. El texto de consentimiento (v2) lo declara explícitamente. El análisis se dispara **solo con mensajes INBOUND** (para no re-analizar en cada respuesta del hijo).
+**Alternativas**:
+- No capturar outbound (v1): analisis ciego al patrón, muchos falsos negativos.
+- Capturar outbound sin opción de apagar: más invasivo que necesario.
+**Consecuencias**:
+- + Detección más precisa (patrón bidireccional).
+- + Padre decide el nivel de intrusión.
+- − Más datos del menor persistidos. Mitigado por: retención de 30 días, mínima exposición al padre, y consentimiento explícito v2.
+
+---
+
 ## ADR-0007 — Mail solo en severidad HIGH
 
 **Fecha**: 2026-09-11

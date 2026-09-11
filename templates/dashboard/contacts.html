@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Contactos — {{ child.child_alias }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Contactos de {{ child.child_alias }}</h1>
+  <a href="{{ url_for('dashboard.index') }}">← Panel</a>
+</div>
+
+{% if not contacts %}
+  <div class="empty">
+    <p>Todavía no llegaron mensajes desde ningún contacto.</p>
+  </div>
+{% else %}
+<table class="listing">
+  <thead>
+    <tr>
+      <th>Nombre / JID</th>
+      <th>Tipo</th>
+      <th>Confianza</th>
+      <th>Último mensaje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in contacts %}
+    <tr>
+      <td>
+        {{ c.display_name or c.phone_jid }}
+        {% if c.display_name %}<br><small>{{ c.phone_jid }}</small>{% endif %}
+      </td>
+      <td>{% if c.is_group %}Grupo{% else %}1-a-1{% endif %}</td>
+      <td><span class="tag">{{ c.trust_level.value }}</span></td>
+      <td>{% if c.last_message_at %}{{ c.last_message_at.strftime('%Y-%m-%d %H:%M') }}{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

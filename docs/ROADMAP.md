@@ -15,11 +15,12 @@
 - [ ] Esqueleto documentado del servicio de mail
 
 ## v0.2 — Análisis básico
-- [ ] Pipeline de análisis: filtro heurístico + LLM sobre conversación completa
-- [ ] Generación de `RiskEvent` con severidad
-- [ ] Dashboard de alertas para el padre (lista, filtros, detalle)
-- [ ] Mail de alerta severidad HIGH
-- [ ] Endpoint `/mi-monitoreo` para el menor (ver estado, revocar)
+- [x] Pipeline de análisis: filtro heurístico + LLM sobre conversación completa
+- [x] Generación de `RiskEvent` con severidad
+- [x] Dashboard de alertas para el padre (lista, filtros, detalle)
+- [x] Mail de alerta severidad HIGH (con degradación si no hay SMTP)
+- [x] Endpoint `/mi-monitoreo` para el menor (ver estado, revocar)
+- [x] Toggle outbound por instancia (ADR-0008)
 
 ## v0.3 — Robustez
 - [ ] Job de retención (30 días de mensajes)

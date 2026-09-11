@@ -6,7 +6,6 @@ lo reporta al arranque (ver `main.py`). No hay defaults con credenciales.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
 from typing import ClassVar
 from dotenv import load_dotenv
 
@@ -61,8 +60,8 @@ class Config:
 
     # ---- Consentimiento ----
     # Versión del texto de consentimiento del menor. Cambiar acá cuando se edite el texto.
-    CONSENT_TEXT_VERSION: ClassVar[str] = "v1-2026-09"
-    TERMS_TEXT_VERSION: ClassVar[str] = "v1-2026-09"
+    CONSENT_TEXT_VERSION: ClassVar[str] = "v2-2026-09"
+    TERMS_TEXT_VERSION: ClassVar[str] = "v2-2026-09"
 
     @classmethod
     def missing_required(cls) -> list[str]:

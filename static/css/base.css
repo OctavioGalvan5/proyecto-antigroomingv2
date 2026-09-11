@@ -100,3 +100,80 @@ body {
 .hint { color: #666; font-size: 0.9rem; }
 
 hr { border: 0; border-top: 1px solid #e2e4e8; margin: 24px 0; }
+
+/* Buttons secondary */
+.btn-secondary {
+  padding: 10px 16px; background: #f4f5f7; color: #1b1b1f; border: 1px solid #c9ccd1;
+  border-radius: 6px; text-decoration: none; display: inline-block; cursor: pointer;
+}
+
+/* Pills (severidad, estados) */
+.pill { padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; }
+.pill-high    { background: #fdecea; color: #a1281b; }
+.pill-medium  { background: #fff3cd; color: #856404; }
+.pill-low     { background: #e6f4ea; color: #1b6b31; }
+.pill-none    { background: #f4f5f7; color: #666; }
+
+/* Tags para categorías */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #eef2ff;
+  color: #1f5fd4;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-right: 4px;
+}
+
+/* Cards */
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e4e8;
+  margin: 16px 0;
+}
+.card h3 { margin-top: 0; }
+.danger-zone { border-color: #f2b3ab; }
+
+/* Filtros */
+.filters { display: flex; gap: 16px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+.filters label { display: flex; flex-direction: column; font-size: 0.85rem; color: #555; }
+.filters select { padding: 6px 8px; border: 1px solid #c9ccd1; border-radius: 6px; }
+
+/* Filas por severidad */
+.row-sev-high td { border-left: 3px solid #b83232; }
+.row-sev-medium td { border-left: 3px solid #d69e2e; }
+.row-sev-low td { border-left: 3px solid #9aa3ad; }
+
+/* Extracto de mensajes en alertas */
+.messages { list-style: none; padding: 0; margin: 0; }
+.msg {
+  border-left: 3px solid #c9ccd1;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #fafbfc;
+  border-radius: 4px;
+}
+.msg-inbound { border-left-color: #1f5fd4; }
+.msg-outbound { border-left-color: #1b6b31; background: #f0fbf3; }
+.msg .meta { font-size: 0.8rem; color: #666; display: flex; gap: 8px; }
+.msg .meta .jid { font-family: ui-monospace, monospace; }
+.msg .body { margin-top: 4px; }
+
+/* Key-value list */
+.kv { list-style: none; padding: 0; margin: 0; }
+.kv li { padding: 4px 0; border-bottom: 1px solid #f0f1f3; }
+.kv li:last-child { border-bottom: 0; }
+
+/* Link box (para copiar) */
+.link-box {
+  display: block;
+  padding: 8px 12px;
+  background: #f4f5f7;
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+

@@ -127,6 +127,11 @@ class ChildInstance(db.Model):
     status = db.Column(Enum(ChildStatus, name="child_status"), nullable=False, default=ChildStatus.PENDING_QR)
     linked_phone = db.Column(String(32))
 
+    # Ver ADR-0008. Si True, se persisten también los mensajes que el hijo envía
+    # (dirección OUTBOUND). El análisis los usa como contexto de patrón (grooming
+    # es bidireccional). El padre sigue viendo solo extractos de alertas.
+    monitor_outbound = db.Column(Boolean, default=True, nullable=False)
+
     # Token público que se le entrega al menor para acceder a /mi-monitoreo.
     # No expone datos hasta que exista ConsentRecord activo.
     minor_access_token = db.Column(String(64), unique=True, nullable=False,
@@ -275,6 +280,8 @@ class RiskEvent(db.Model):
     reviewer_note = db.Column(Text)
 
     child_instance = relationship("ChildInstance", back_populates="risk_events")
+    contact = relationship("Contact")
+    conversation = relationship("Conversation")
 
     __table_args__ = (
         Index("ix_risk_child_sev_created", "child_instance_id", "severity", "created_at"),

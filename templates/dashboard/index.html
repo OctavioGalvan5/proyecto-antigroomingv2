@@ -3,7 +3,10 @@
 {% block content %}
 <div class="page-head">
   <h1>Panel</h1>
-  <a href="{{ url_for('linking.new') }}" class="btn-primary">+ Vincular hijo/a</a>
+  <div>
+    <a href="{{ url_for('dashboard.alerts') }}" class="btn-secondary">Ver alertas</a>
+    <a href="{{ url_for('linking.new') }}" class="btn-primary">+ Vincular hijo/a</a>
+  </div>
 </div>
 
 {% if not children %}
@@ -19,27 +22,42 @@
         <th>Alias</th>
         <th>Edad</th>
         <th>Estado</th>
-        <th>Consentimiento</th>
+        <th>Consent.</th>
+        <th>Outbound</th>
+        <th>Alertas</th>
         <th>Creado</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
       {% for child in children %}
+      {% set c = counts.get(child.id, {}) %}
       <tr>
         <td>{{ child.child_alias }}</td>
         <td>{{ child.child_age or '—' }}</td>
         <td><span class="status status-{{ child.status.value|lower }}">{{ child.status.value }}</span></td>
         <td>
           {% if child.has_active_consent %}
-            <span class="ok">Aceptado</span>
+            <span class="ok">✔</span>
           {% else %}
-            <span class="warn">Pendiente</span>
+            <span class="warn">pendiente</span>
           {% endif %}
+        </td>
+        <td>
+          {% if child.monitor_outbound %}<span class="ok">ON</span>
+          {% else %}<span class="warn">OFF</span>{% endif %}
+        </td>
+        <td>
+          {% if c.get('HIGH', 0) %}<span class="pill pill-high">{{ c['HIGH'] }} altas</span>{% endif %}
+          {% if c.get('MEDIUM', 0) %}<span class="pill pill-medium">{{ c['MEDIUM'] }} med</span>{% endif %}
+          {% if c.get('LOW', 0) %}<span class="pill pill-low">{{ c['LOW'] }} bajas</span>{% endif %}
+          {% if not c %}—{% endif %}
         </td>
         <td>{{ child.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
         <td>
-          <a href="{{ url_for('linking.qr', child_id=child.id) }}">Ver</a>
+          <a href="{{ url_for('linking.qr', child_id=child.id) }}">Config</a> ·
+          <a href="{{ url_for('dashboard.child_contacts', child_id=child.id) }}">Contactos</a> ·
+          <a href="{{ url_for('dashboard.alerts', child_id=child.id) }}">Alertas</a>
         </td>
       </tr>
       {% endfor %}

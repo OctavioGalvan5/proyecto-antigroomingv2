@@ -20,8 +20,9 @@ from models import db
 from blueprints import auth as auth_bp
 from blueprints import dashboard as dashboard_bp
 from blueprints import linking as linking_bp
+from blueprints import minor as minor_bp
 from blueprints import webhook as webhook_bp
-from services import consent_service
+from services import background, consent_service
 
 
 def create_app() -> Flask:
@@ -45,6 +46,8 @@ def create_app() -> Flask:
     with app.app_context():
         db.create_all()
 
+    background.configure(app)
+
     _register_blueprints(app)
     _register_hooks(app)
     _register_error_handlers(app)
@@ -57,6 +60,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(auth_bp.bp)
     app.register_blueprint(dashboard_bp.bp)
     app.register_blueprint(linking_bp.bp)
+    app.register_blueprint(minor_bp.bp)
     app.register_blueprint(webhook_bp.bp)
 
     @app.route("/")

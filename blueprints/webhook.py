@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 
 from config import Config
 from models import (
@@ -31,6 +31,8 @@ from models import (
     db,
     utcnow,
 )
+from services import analysis_service
+from services.background import run_in_background
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("webhook", __name__, url_prefix="/webhook")
@@ -142,13 +144,15 @@ def _persist_incoming_message(child: ChildInstance, msg: dict) -> None:
     from_me = bool(key.get("fromMe"))
     remote_jid = key.get("remoteJid") or ""
     wa_id = key.get("id") or ""
+    # En chats de grupo, `remoteJid` es el JID del GRUPO y `participant` es el
+    # JID de la persona que efectivamente envió el mensaje. En 1-a-1 no viene.
+    participant = key.get("participant") or ""
 
     if not remote_jid or not wa_id:
         return
 
-    # v0.1: solo persistimos mensajes ENTRANTES al hijo.
-    # Ver docs/ROADMAP.md — decisión de no monitorear salientes por privacidad.
-    if from_me:
+    # Outbound: se persiste solo si la instancia lo permite (ver ADR-0008).
+    if from_me and not child.monitor_outbound:
         return
 
     body, media_type, media_ref = _extract_content(msg.get("message") or {})
@@ -161,7 +165,27 @@ def _persist_incoming_message(child: ChildInstance, msg: dict) -> None:
     except (TypeError, ValueError):
         ts = utcnow()
 
-    contact = _get_or_create_contact(child, remote_jid, msg.get("pushName"))
+    is_group = remote_jid.endswith("@g.us")
+    direction = MessageDirection.OUTBOUND if from_me else MessageDirection.INBOUND
+
+    # Sender real:
+    #  - inbound 1-a-1: el propio remote_jid.
+    #  - inbound grupo: el `participant`.
+    #  - outbound (cualquiera): el hijo. Usamos linked_phone si lo tenemos; si no, "self".
+    if from_me:
+        sender_jid = child.linked_phone or "self"
+    elif is_group and participant:
+        sender_jid = participant
+    else:
+        sender_jid = remote_jid
+
+    push_name = msg.get("pushName")
+    # `pushName` refiere al que envió. En outbound es el propio hijo — no lo
+    # propagamos al contacto. En inbound-grupo tampoco (sería el nombre de un
+    # participante, no del grupo).
+    contact_push_name = None if (from_me or is_group) else push_name
+
+    contact = _get_or_create_contact(child, remote_jid, contact_push_name)
     conversation = _get_or_create_conversation(child, contact)
 
     # Dedup por wa_message_id
@@ -177,8 +201,8 @@ def _persist_incoming_message(child: ChildInstance, msg: dict) -> None:
     message = Message(
         conversation_id=conversation.id,
         wa_message_id=wa_id,
-        direction=MessageDirection.INBOUND,
-        sender_jid=remote_jid,
+        direction=direction,
+        sender_jid=sender_jid,
         body=body,
         media_type=media_type,
         media_ref=media_ref,
@@ -192,9 +216,11 @@ def _persist_incoming_message(child: ChildInstance, msg: dict) -> None:
     contact.last_message_at = ts
     db.session.commit()
 
-    # v0.2: acá se dispara el pipeline de análisis (ver docs/ANALYSIS_PIPELINE.md)
-    # from services.analysis_service import maybe_analyze_conversation
-    # maybe_analyze_conversation(conversation.id)
+    # Disparo del pipeline de análisis fuera del request (thread pool).
+    # Sólo se dispara desde mensajes ENTRANTES: el análisis lee outbound como
+    # contexto, pero re-analizar en cada respuesta del hijo sería redundante.
+    if direction == MessageDirection.INBOUND:
+        run_in_background(analysis_service.maybe_analyze_conversation, conversation.id)
 
 
 # --------------------------------------------------------------------------- #

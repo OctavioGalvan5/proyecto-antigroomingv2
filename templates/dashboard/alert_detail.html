@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Alerta {{ event.severity.value }} — {{ event.child_instance.child_alias }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>
+    Alerta <span class="pill pill-{{ event.severity.value|lower }}">{{ event.severity.value }}</span>
+    <small>— {{ event.child_instance.child_alias }}</small>
+  </h1>
+  <a href="{{ url_for('dashboard.alerts') }}">← Todas las alertas</a>
+</div>
+
+<section class="card">
+  <h3>Motivo</h3>
+  <p>{{ event.reasons }}</p>
+
+  <h3>Categorías detectadas</h3>
+  <p>
+    {% for cat in (event.categories or []) %}<span class="tag">{{ cat }}</span>{% endfor %}
+    {% if not event.categories %}—{% endif %}
+  </p>
+
+  <h3>Contexto acotado</h3>
+  <p><small>Solo se muestran los mensajes que el análisis identificó como relevantes. No se expone la conversación completa.</small></p>
+  {% if event.excerpt %}
+    <ul class="messages">
+      {% for m in event.excerpt %}
+        <li class="msg msg-{{ m.direction|lower }}">
+          <div class="meta">
+            <strong>{{ m.direction }}</strong>
+            <span class="jid">{{ m.sender_jid }}</span>
+            <span class="ts">{{ m.timestamp or '' }}</span>
+          </div>
+          <div class="body">{{ m.body }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p><em>(sin extracto)</em></p>
+  {% endif %}
+
+  <h3>Metadata técnica</h3>
+  <ul class="kv">
+    <li><b>Modelo:</b> {{ event.model_used or 'n/d' }}</li>
+    <li><b>Tokens usados:</b> {{ event.tokens_used or 'n/d' }}</li>
+    <li><b>Creada:</b> {{ event.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</li>
+    {% if event.notified_at %}
+      <li><b>Notificada por mail:</b> {{ event.notified_at.strftime('%Y-%m-%d %H:%M') }} UTC</li>
+    {% endif %}
+  </ul>
+</section>
+
+<section class="card">
+  <h3>Revisión</h3>
+  {% if event.reviewed_at %}
+    <p class="ok">Revisada el {{ event.reviewed_at.strftime('%Y-%m-%d %H:%M') }} UTC.</p>
+    {% if event.reviewer_note %}
+      <p><b>Nota:</b> {{ event.reviewer_note }}</p>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{{ url_for('dashboard.alert_review', event_id=event.id) }}" class="form">
+      <label>
+        <span>Nota (opcional)</span>
+        <textarea name="note" rows="3" placeholder="Ej: hablé con Sofía, era un chiste con una amiga"></textarea>
+      </label>
+      <button type="submit">Marcar como revisada</button>
+    </form>
+  {% endif %}
+</section>
+
+<section class="card danger-zone">
+  <p><small>
+    Ante hechos concretos, denunciá en fiscalía local o llamá a la <b>Línea 137</b> (Argentina, gratuita, 24hs).
+  </small></p>
+</section>
+{% endblock %}

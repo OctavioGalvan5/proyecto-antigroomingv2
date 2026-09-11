@@ -143,11 +143,34 @@ class EvolutionClient:
         return state or "unknown"
 
     def logout(self, instance_name: str) -> dict:
-        return self._request("POST", f"/instance/logout/{instance_name}")
+        """Cierra la sesión de WhatsApp en Evolution API.
+
+        El endpoint en Evolution es DELETE /instance/logout/{instance}.
+        Si devuelve 404, la instancia ya no está conectada o no existe en Evolution.
+        """
+        try:
+            return self._request("DELETE", f"/instance/logout/{instance_name}")
+        except EvolutionAPIError as exc:
+            # Fallback por si la versión de Evolution usa POST
+            if exc.status_code in (404, 405):
+                try:
+                    return self._request("POST", f"/instance/logout/{instance_name}")
+                except EvolutionAPIError:
+                    pass
+            if exc.status_code == 404:
+                logger.warning("Instancia %s ya no existía en Evolution o ya estaba cerrada", instance_name)
+                return {"status": "already_disconnected"}
+            raise
 
     def delete_instance(self, instance_name: str) -> dict:
-        """Elimina la instancia (usar al revocar consentimiento)."""
-        return self._request("DELETE", f"/instance/delete/{instance_name}")
+        """Elimina la instancia (usar al revocar consentimiento o borrar conexión)."""
+        try:
+            return self._request("DELETE", f"/instance/delete/{instance_name}")
+        except EvolutionAPIError as exc:
+            if exc.status_code == 404:
+                logger.info("Instancia %s ya no existía en Evolution API", instance_name)
+                return {"status": "already_deleted"}
+            raise
 
     def set_webhook(self, instance_name: str, webhook_url: str) -> dict:
         """Actualiza el webhook post-hoc si hace falta."""

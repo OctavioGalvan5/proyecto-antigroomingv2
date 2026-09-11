@@ -1,36 +1,45 @@
 {% extends "base.html" %}
 {% block title %}Crear cuenta — Antigrooming{% endblock %}
 {% block content %}
-<h1>Crear cuenta</h1>
-<p class="lead">Registrate como padre, madre o tutor legal para vincular la cuenta de WhatsApp del menor bajo tu responsabilidad.</p>
+<div style="max-width: 580px; margin: 1.5rem auto;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="margin-bottom: 1.75rem;">
+      <h1 style="font-size: 1.6rem; margin-bottom: 0.35rem;">Crear cuenta de tutor</h1>
+      <p class="lead" style="margin-bottom: 0;">Registrate como padre, madre o tutor legal para vincular la cuenta de WhatsApp del menor bajo tu responsabilidad.</p>
+    </div>
 
-<form method="post" class="form">
-  <label>
-    <span>Email</span>
-    <input type="email" name="email" required value="{{ email or '' }}" autocomplete="email">
-  </label>
+    <form method="post" class="form" style="max-width: 100%; margin: 0;">
+      <label>
+        <span>Correo electrónico</span>
+        <input type="email" name="email" required value="{{ email or '' }}" autocomplete="email" placeholder="ejemplo@correo.com">
+      </label>
 
-  <label>
-    <span>Nombre completo (opcional)</span>
-    <input type="text" name="full_name" value="{{ full_name or '' }}" autocomplete="name">
-  </label>
+      <label>
+        <span>Nombre completo (opcional)</span>
+        <input type="text" name="full_name" value="{{ full_name or '' }}" autocomplete="name" placeholder="Tu nombre y apellido">
+      </label>
 
-  <label>
-    <span>Contraseña (mínimo 10 caracteres)</span>
-    <input type="password" name="password" required minlength="10" autocomplete="new-password">
-  </label>
+      <label>
+        <span>Contraseña</span>
+        <input type="password" name="password" required minlength="10" autocomplete="new-password" placeholder="Mínimo 10 caracteres">
+        <small>Usá una combinación de letras, números y caracteres especiales.</small>
+      </label>
 
-  <section class="terms-box">
-    <h3>Declaración</h3>
-    <pre class="terms-text">{{ parent_terms }}</pre>
-    <label class="checkbox">
-      <input type="checkbox" name="accept_terms" required>
-      <span>Acepto la declaración anterior.</span>
-    </label>
-  </section>
+      <section class="terms-box">
+        <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-600); margin-bottom: 0.5rem;">Declaración y Términos Legales</h3>
+        <pre class="terms-text">{{ parent_terms }}</pre>
+        <label class="checkbox" style="margin-top: 0.75rem;">
+          <input type="checkbox" name="accept_terms" required>
+          <span style="font-size: 0.9rem; color: var(--slate-800);">Declaro bajo juramento que soy tutor legal del menor y acepto los términos anteriores.</span>
+        </label>
+      </section>
 
-  <button type="submit">Crear cuenta</button>
-</form>
+      <button type="submit" style="width: 100%; margin-top: 0.5rem;">Registrarme y Comenzar</button>
+    </form>
 
-<p>¿Ya tenés cuenta? <a href="{{ url_for('auth.login') }}">Ingresá acá</a>.</p>
+    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--slate-100); font-size: 0.9rem; color: var(--slate-600);">
+      ¿Ya tenés cuenta? <a href="{{ url_for('auth.login') }}" style="color: var(--primary-600); font-weight: 600; text-decoration: none;">Ingresá acá</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

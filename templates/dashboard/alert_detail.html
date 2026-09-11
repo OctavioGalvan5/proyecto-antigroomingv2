@@ -1,75 +1,142 @@
 {% extends "base.html" %}
-{% block title %}Alerta {{ event.severity.value }} — {{ event.child_instance.child_alias }}{% endblock %}
+{% block title %}Detalle de Alerta — {{ event.child_instance.child_alias }}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>
-    Alerta <span class="pill pill-{{ event.severity.value|lower }}">{{ event.severity.value }}</span>
-    <small>— {{ event.child_instance.child_alias }}</small>
-  </h1>
-  <a href="{{ url_for('dashboard.alerts') }}">← Todas las alertas</a>
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+      <h1 style="margin: 0;">Detalle de Alerta</h1>
+      <span class="pill pill-{{ event.severity.value|lower }}" style="font-size: 0.9rem; padding: 0.35rem 0.85rem;">
+        SEVERIDAD {{ event.severity|severity_es|upper }}
+      </span>
+    </div>
+    <p class="lead" style="margin: 0;">
+      Menor: <strong>{{ event.child_instance.child_alias }}</strong> · Interlocutor: <strong>{{ event.contact.display_name or event.contact.phone_jid }}</strong>
+    </p>
+  </div>
+  <a href="{{ url_for('dashboard.alerts') }}" class="btn-secondary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Todas las alertas
+  </a>
 </div>
 
-<section class="card">
-  <h3>Motivo</h3>
-  <p>{{ event.reasons }}</p>
+<div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.75rem; align-items: start;">
+  <!-- Columna Izquierda: Motivo y Mensajes Clave -->
+  <div>
+    <section class="card" style="margin-top: 0;">
+      <h2 style="font-size: 1.15rem; color: var(--slate-900); border-bottom: 1px solid var(--slate-100); padding-bottom: 0.75rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Diagnóstico del Análisis
+      </h2>
+      <p style="font-size: 1rem; color: var(--slate-800); line-height: 1.6; margin-bottom: 1.25rem;">
+        {{ event.reasons }}
+      </p>
 
-  <h3>Categorías detectadas</h3>
-  <p>
-    {% for cat in (event.categories or []) %}<span class="tag">{{ cat }}</span>{% endfor %}
-    {% if not event.categories %}—{% endif %}
-  </p>
+      <div style="margin-bottom: 1.5rem;">
+        <strong style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--slate-500); display: block; margin-bottom: 0.5rem;">
+          Patrones / Fases Identificadas
+        </strong>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          {% for cat in (event.categories or []) %}
+            <span class="tag" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">{{ cat|category_es }}</span>
+          {% endfor %}
+          {% if not event.categories %}<span style="color: var(--slate-400);">No especificado</span>{% endif %}
+        </div>
+      </div>
 
-  <h3>Contexto acotado</h3>
-  <p><small>Solo se muestran los mensajes que el análisis identificó como relevantes. No se expone la conversación completa.</small></p>
-  {% if event.excerpt %}
-    <ul class="messages">
-      {% for m in event.excerpt %}
-        <li class="msg msg-{{ m.direction|lower }}">
-          <div class="meta">
-            <strong>{{ m.direction }}</strong>
-            <span class="jid">{{ m.sender_jid }}</span>
-            <span class="ts">{{ m.timestamp or '' }}</span>
+      <h2 style="font-size: 1.15rem; color: var(--slate-900); border-bottom: 1px solid var(--slate-100); padding-bottom: 0.75rem; margin-top: 1.75rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Extracto Concreto del Chat
+      </h2>
+      <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1rem;">
+        Por principios éticos de mínima exposición y respeto a la intimidad del menor, únicamente se exponen los fragmentos que fundamentaron la alerta.
+      </p>
+
+      {% if event.excerpt %}
+        <div class="messages">
+          {% for m in event.excerpt %}
+            <div class="msg msg-{{ m.direction|lower }}">
+              <div class="meta">
+                <strong>
+                  {{ m.direction|direction_es }}
+                </strong>
+                <span class="ts">{{ m.timestamp or '' }}</span>
+              </div>
+              <div class="body">{{ m.body }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="padding: 1.5rem; background: var(--slate-50); border-radius: var(--radius-md); text-align: center; color: var(--slate-500); font-style: italic;">
+          (Sin extracto textual registrado)
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- Columna Derecha: Revisión, Metadatos y Asistencia Legal -->
+  <div>
+    <section class="card" style="margin-top: 0;">
+      <h3 style="font-size: 1.05rem;">Revisión de la Alerta</h3>
+      {% if event.reviewed_at %}
+        <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--success-600); font-weight: 600; margin-bottom: 0.75rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Revisada el {{ event.reviewed_at.strftime('%d/%m/%Y a las %H:%M') }} UTC
+        </div>
+        {% if event.reviewer_note %}
+          <div style="background: var(--slate-50); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--slate-200); font-size: 0.9rem;">
+            <strong style="color: var(--slate-700); display: block; font-size: 0.8rem; margin-bottom: 0.25rem;">Nota del tutor:</strong>
+            {{ event.reviewer_note }}
           </div>
-          <div class="body">{{ m.body }}</div>
+        {% endif %}
+      {% else %}
+        <p style="font-size: 0.875rem; color: var(--slate-600);">Podés marcar esta alerta como examinada y dejar un comentario para tu propio registro familiar.</p>
+        <form method="post" action="{{ url_for('dashboard.alert_review', event_id=event.id) }}" class="form" style="margin: 0;">
+          <label>
+            <span>Nota interna (opcional)</span>
+            <textarea name="note" rows="3" placeholder="Ej: Conversado con mi hijo, acordamos bloquear al usuario."></textarea>
+          </label>
+          <button type="submit" style="width: 100%;">Marcar como revisada</button>
+        </form>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h3 style="font-size: 1.05rem;">Ficha Técnica</h3>
+      <ul class="kv">
+        <li>
+          <b>Modelo IA</b>
+          <span style="font-family: var(--font-mono); font-size: 0.8rem;">{{ event.model_used or 'n/d' }}</span>
         </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p><em>(sin extracto)</em></p>
-  {% endif %}
+        <li>
+          <b>Tokens consumidos</b>
+          <span style="font-family: var(--font-mono); font-size: 0.8rem;">{{ event.tokens_used or 'n/d' }}</span>
+        </li>
+        <li>
+          <b>Fecha de detección</b>
+          <span style="font-size: 0.825rem; color: var(--slate-600);">{{ event.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+        </li>
+        <li>
+          <b>Notificación por Correo</b>
+          <span style="font-size: 0.825rem;">
+            {% if event.notified_at %}
+              <span class="ok">Enviado ({{ event.notified_at.strftime('%H:%M') }})</span>
+            {% else %}
+              <span style="color: var(--slate-500);">No requerida (no es ALTA)</span>
+            {% endif %}
+          </span>
+        </li>
+      </ul>
+    </section>
 
-  <h3>Metadata técnica</h3>
-  <ul class="kv">
-    <li><b>Modelo:</b> {{ event.model_used or 'n/d' }}</li>
-    <li><b>Tokens usados:</b> {{ event.tokens_used or 'n/d' }}</li>
-    <li><b>Creada:</b> {{ event.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</li>
-    {% if event.notified_at %}
-      <li><b>Notificada por mail:</b> {{ event.notified_at.strftime('%Y-%m-%d %H:%M') }} UTC</li>
-    {% endif %}
-  </ul>
-</section>
-
-<section class="card">
-  <h3>Revisión</h3>
-  {% if event.reviewed_at %}
-    <p class="ok">Revisada el {{ event.reviewed_at.strftime('%Y-%m-%d %H:%M') }} UTC.</p>
-    {% if event.reviewer_note %}
-      <p><b>Nota:</b> {{ event.reviewer_note }}</p>
-    {% endif %}
-  {% else %}
-    <form method="post" action="{{ url_for('dashboard.alert_review', event_id=event.id) }}" class="form">
-      <label>
-        <span>Nota (opcional)</span>
-        <textarea name="note" rows="3" placeholder="Ej: hablé con Sofía, era un chiste con una amiga"></textarea>
-      </label>
-      <button type="submit">Marcar como revisada</button>
-    </form>
-  {% endif %}
-</section>
-
-<section class="card danger-zone">
-  <p><small>
-    Ante hechos concretos, denunciá en fiscalía local o llamá a la <b>Línea 137</b> (Argentina, gratuita, 24hs).
-  </small></p>
-</section>
+    <section class="card danger-zone" style="border-left: 4px solid var(--danger-500);">
+      <h3 style="color: var(--danger-600); font-size: 1rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Orientación y Denuncia
+      </h3>
+      <p style="font-size: 0.875rem; color: var(--slate-700); margin: 0; line-height: 1.5;">
+        Si detectás una situación de acoso o delito flagrante, no borres el chat y hacé la denuncia en una fiscalía especializada o llamá de inmediato a la <strong>Línea 137</strong> (gratuita, las 24 hs en Argentina).
+      </p>
+    </section>
+  </div>
+</div>
 {% endblock %}

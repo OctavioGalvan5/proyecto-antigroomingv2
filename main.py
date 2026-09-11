@@ -52,6 +52,7 @@ def create_app() -> Flask:
     _register_hooks(app)
     _register_error_handlers(app)
     _register_context_processors(app)
+    _register_template_filters(app)
 
     return app
 
@@ -89,6 +90,67 @@ def _register_context_processors(app: Flask) -> None:
         return {
             "parent_terms": consent_service.get_parent_terms_text(),
         }
+
+
+def _register_template_filters(app: Flask) -> None:
+    STATUS_LABELS = {
+        "PENDING_QR": "Esperando QR",
+        "PENDING_CONSENT": "Esperando consentimiento",
+        "CONNECTED": "Conectado",
+        "DISCONNECTED": "Desconectado",
+        "REVOKED": "Revocado",
+    }
+    SEVERITY_LABELS = {
+        "HIGH": "Alta",
+        "MEDIUM": "Media",
+        "LOW": "Baja",
+        "NONE": "Ninguna",
+    }
+    TRUST_LABELS = {
+        "UNKNOWN": "Desconocido",
+        "TRUSTED": "Confiable",
+        "FLAGGED": "Sospechoso",
+    }
+    CATEGORY_LABELS = {
+        "aislamiento": "Aislamiento",
+        "escalada_sexual": "Escalada sexual",
+        "cambio_plataforma": "Cambio de plataforma",
+        "encuentro_fisico": "Encuentro físico",
+        "coercion": "Coerción / Chantaje",
+        "adulacion_intensa": "Adulación intensa",
+        "peticion_datos_personales": "Petición de datos personales",
+        "otro": "Otro",
+    }
+    DIRECTION_LABELS = {
+        "INBOUND": "Recibido (Contacto)",
+        "OUTBOUND": "Enviado (Hijo/a)",
+    }
+
+    @app.template_filter("status_es")
+    def _status_es(val):
+        key = getattr(val, "value", str(val))
+        return STATUS_LABELS.get(key, key)
+
+    @app.template_filter("severity_es")
+    def _severity_es(val):
+        key = getattr(val, "value", str(val))
+        return SEVERITY_LABELS.get(key, key)
+
+    @app.template_filter("trust_es")
+    def _trust_es(val):
+        key = getattr(val, "value", str(val))
+        return TRUST_LABELS.get(key, key)
+
+    @app.template_filter("category_es")
+    def _category_es(val):
+        raw = getattr(val, "value", str(val)).lower()
+        return CATEGORY_LABELS.get(raw, raw.replace("_", " ").capitalize())
+
+    @app.template_filter("direction_es")
+    def _direction_es(val):
+        key = getattr(val, "value", str(val))
+        return DIRECTION_LABELS.get(key, key)
+
 
 
 # --------------------------------------------------------------------------- #

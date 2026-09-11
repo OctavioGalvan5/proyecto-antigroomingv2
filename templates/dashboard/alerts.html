@@ -1,25 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Alertas — Antigrooming{% endblock %}
+{% block title %}Supervisión de Alertas — Antigrooming{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Alertas</h1>
-  <a href="{{ url_for('dashboard.index') }}">← Volver al panel</a>
+  <div>
+    <h1>Supervisión de Alertas</h1>
+    <p class="lead" style="margin: 0.25rem 0 0 0;">Eventos de riesgo detectados por el motor de análisis conversacional</p>
+  </div>
+  <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Volver al panel
+  </a>
 </div>
 
 <form method="get" class="filters">
   <label>
-    Severidad
+    <span>Filtrar por Severidad:</span>
     <select name="severity" onchange="this.form.submit()">
-      <option value="">Todas</option>
-      {% for s in ['HIGH','MEDIUM','LOW'] %}
-        <option value="{{ s }}" {% if severity_filter == s %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
+      <option value="">Todas las severidades</option>
+      <option value="HIGH" {% if severity_filter == 'HIGH' %}selected{% endif %}>Alta</option>
+      <option value="MEDIUM" {% if severity_filter == 'MEDIUM' %}selected{% endif %}>Media</option>
+      <option value="LOW" {% if severity_filter == 'LOW' %}selected{% endif %}>Baja</option>
     </select>
   </label>
   <label>
-    Hijo/a
+    <span>Hijo/a:</span>
     <select name="child_id" onchange="this.form.submit()">
-      <option value="">Todos</option>
+      <option value="">Todos los menores</option>
       {% for ch in children %}
         <option value="{{ ch.id }}" {% if child_id_filter == ch.id %}selected{% endif %}>{{ ch.child_alias }}</option>
       {% endfor %}
@@ -28,46 +34,78 @@
 </form>
 
 {% if not events %}
-  <div class="empty">
-    <p>Ninguna alerta hasta ahora. Es una buena noticia — o llegaron pocos mensajes todavía.</p>
+  <div class="empty card">
+    <div style="width: 52px; height: 52px; background: var(--success-50); border-radius: 50%; color: var(--success-600); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h3 style="margin-bottom: 0.5rem;">Sin alertas activas</h3>
+    <p>No se han identificado señales de riesgo con los filtros seleccionados. El sistema continúa supervisando en tiempo real.</p>
   </div>
 {% else %}
-<table class="listing">
-  <thead>
-    <tr>
-      <th>Fecha</th>
-      <th>Hijo/a</th>
-      <th>Contacto</th>
-      <th>Severidad</th>
-      <th>Categorías</th>
-      <th>Revisada</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for e in events %}
-    <tr class="row-sev-{{ e.severity.value|lower }}">
-      <td><small>{{ e.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
-      <td>{{ e.child_instance.child_alias }}</td>
-      <td>
-        {{ e.contact.display_name or e.contact.phone_jid }}
-        {% if e.contact.is_group %}<small>(grupo)</small>{% endif %}
-      </td>
-      <td><span class="pill pill-{{ e.severity.value|lower }}">{{ e.severity.value }}</span></td>
-      <td>
-        {% for cat in (e.categories or []) %}<span class="tag">{{ cat }}</span>{% endfor %}
-      </td>
-      <td>
-        {% if e.reviewed_at %}
-          <span class="ok">✔ {{ e.reviewed_at.strftime('%Y-%m-%d') }}</span>
-        {% else %}
-          <span class="warn">pendiente</span>
-        {% endif %}
-      </td>
-      <td><a href="{{ url_for('dashboard.alert_detail', event_id=e.id) }}">Ver</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+  <div class="table-responsive">
+    <table class="listing">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Menor</th>
+          <th>Contacto Involucrado</th>
+          <th>Severidad</th>
+          <th>Patrones Detectados</th>
+          <th>Estado Revisión</th>
+          <th style="text-align: right;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+        <tr class="row-sev-{{ e.severity.value|lower }}">
+          <td>
+            <strong style="color: var(--slate-800); font-size: 0.875rem;">{{ e.created_at.strftime('%d/%m/%Y') }}</strong>
+            <div style="font-size: 0.775rem; color: var(--slate-500);">{{ e.created_at.strftime('%H:%M') }} UTC</div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: var(--slate-900);">{{ e.child_instance.child_alias }}</div>
+          </td>
+          <td>
+            <div style="font-weight: 600; color: var(--slate-800);">
+              {{ e.contact.display_name or e.contact.phone_jid }}
+            </div>
+            {% if e.contact.is_group %}
+              <span class="tag" style="background-color: var(--slate-100); color: var(--slate-600); font-size: 0.725rem;">Grupo</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="pill pill-{{ e.severity.value|lower }}">
+              {{ e.severity|severity_es|upper }}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+              {% for cat in (e.categories or []) %}
+                <span class="tag">{{ cat|category_es }}</span>
+              {% endfor %}
+              {% if not e.categories %}<span style="color: var(--slate-400);">—</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            {% if e.reviewed_at %}
+              <span class="status status-connected" style="font-size: 0.775rem;">
+                ✔ Revisada
+              </span>
+            {% else %}
+              <span class="status status-pending_consent" style="font-size: 0.775rem;">
+                Pendiente
+              </span>
+            {% endif %}
+          </td>
+          <td style="text-align: right;">
+            <a href="{{ url_for('dashboard.alert_detail', event_id=e.id) }}" class="btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+              Ver detalle →
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 {% endblock %}

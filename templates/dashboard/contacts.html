@@ -1,38 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Contactos — {{ child.child_alias }}{% endblock %}
+{% block title %}Contactos de {{ child.child_alias }} — Antigrooming{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Contactos de {{ child.child_alias }}</h1>
-  <a href="{{ url_for('dashboard.index') }}">← Panel</a>
+  <div>
+    <h1>Contactos Registrados</h1>
+    <p class="lead" style="margin: 0.25rem 0 0 0;">
+      Interlocutores de WhatsApp identificados para <strong>{{ child.child_alias }}</strong>
+    </p>
+  </div>
+  <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Volver al panel
+  </a>
 </div>
 
 {% if not contacts %}
-  <div class="empty">
-    <p>Todavía no llegaron mensajes desde ningún contacto.</p>
+  <div class="empty card">
+    <div style="width: 52px; height: 52px; background: var(--slate-100); border-radius: 50%; color: var(--slate-500); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <h3 style="margin-bottom: 0.5rem;">Sin contactos registrados aún</h3>
+    <p>A medida que la cuenta vinculada reciba mensajes, se indexarán los identificadores de los remitentes automáticamente.</p>
   </div>
 {% else %}
-<table class="listing">
-  <thead>
-    <tr>
-      <th>Nombre / JID</th>
-      <th>Tipo</th>
-      <th>Confianza</th>
-      <th>Último mensaje</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for c in contacts %}
-    <tr>
-      <td>
-        {{ c.display_name or c.phone_jid }}
-        {% if c.display_name %}<br><small>{{ c.phone_jid }}</small>{% endif %}
-      </td>
-      <td>{% if c.is_group %}Grupo{% else %}1-a-1{% endif %}</td>
-      <td><span class="tag">{{ c.trust_level.value }}</span></td>
-      <td>{% if c.last_message_at %}{{ c.last_message_at.strftime('%Y-%m-%d %H:%M') }}{% else %}—{% endif %}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+  <div class="table-responsive">
+    <table class="listing">
+      <thead>
+        <tr>
+          <th>Interlocutor</th>
+          <th>Tipo de Conversación</th>
+          <th>Nivel de Confianza</th>
+          <th>Último Mensaje Recibido</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contacts %}
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--slate-100); color: var(--slate-700); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                {% if c.is_group %}
+                  👥
+                {% else %}
+                  👤
+                {% endif %}
+              </div>
+              <div>
+                <strong style="color: var(--slate-900);">{{ c.display_name or 'Sin nombre público' }}</strong>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--slate-500);">{{ c.phone_jid }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if c.is_group %}
+              <span class="tag" style="background-color: var(--slate-100); color: var(--slate-700);">Grupo de WhatsApp</span>
+            {% else %}
+              <span class="tag" style="background-color: var(--primary-50); color: var(--primary-700);">Chat Individual (1 a 1)</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="pill pill-{{ 'low' if c.trust_level.value == 'TRUSTED' else 'medium' if c.trust_level.value == 'FLAGGED' else 'none' }}">
+              {{ c.trust_level|trust_es }}
+            </span>
+          </td>
+          <td>
+            {% if c.last_message_at %}
+              <span style="font-size: 0.875rem; color: var(--slate-700);">{{ c.last_message_at.strftime('%d/%m/%Y %H:%M') }}</span>
+            {% else %}
+              <span style="color: var(--slate-400);">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 {% endblock %}

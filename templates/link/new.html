@@ -1,32 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Vincular hijo/a — Antigrooming{% endblock %}
+{% block title %}Vincular Cuenta de Menor — Antigrooming{% endblock %}
 {% block content %}
-<h1>Vincular WhatsApp de un menor</h1>
+<div style="max-width: 580px; margin: 1.5rem auto;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="margin-bottom: 1.5rem;">
+      <h1 style="font-size: 1.5rem; margin-bottom: 0.35rem;">Vincular WhatsApp de un menor</h1>
+      <p class="lead" style="margin-bottom: 0;">Asociá la cuenta para comenzar la supervisión preventiva con consentimiento informado.</p>
+    </div>
 
-<div class="warning-box">
-  <strong>Antes de continuar:</strong>
-  <ul>
-    <li>Explicale al menor qué hace este sistema (leer los mensajes que le llegan y buscar señales de peligro).</li>
-    <li>Necesitás tener el celular del menor a mano para escanear el QR.</li>
-    <li>En la próxima pantalla el menor deberá aceptar el consentimiento antes de que el monitoreo se active.</li>
-  </ul>
+    <div class="warning-box">
+      <strong>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Pautas previas obligatorias
+      </strong>
+      <ul>
+        <li>Conversá previamente con el menor explicándole que la herramienta busca exclusivamente amenazas y situaciones de riesgo.</li>
+        <li>Tené el dispositivo del menor a mano para escanear el código QR.</li>
+        <li>El menor deberá tildar activamente la pantalla de consentimiento antes de que se active cualquier lectura.</li>
+      </ul>
+    </div>
+
+    <form method="post" class="form" style="max-width: 100%; margin: 0;">
+      <label>
+        <span>Alias identificatorio</span>
+        <input type="text" name="child_alias" required maxlength="120"
+               placeholder="Ej: Sofía, Mateo"
+               value="{{ child_alias or '' }}">
+        <small>Nombre con el que identificarás al menor en el panel.</small>
+      </label>
+
+      <label>
+        <span>Edad del menor (opcional pero recomendado)</span>
+        <input type="number" name="child_age" min="6" max="21"
+               placeholder="Ej: 13"
+               value="{{ child_age or '' }}">
+        <small>Permite al modelo de IA comprender el contexto etario del lenguaje.</small>
+      </label>
+
+      <button type="submit" style="width: 100%; margin-top: 0.5rem;">
+        Crear Instancia y Generar QR →
+      </button>
+    </form>
+  </div>
 </div>
-
-<form method="post" class="form">
-  <label>
-    <span>Alias del hijo/a</span>
-    <input type="text" name="child_alias" required maxlength="120"
-           placeholder="Ej: Juan, Sofi"
-           value="{{ child_alias or '' }}">
-  </label>
-
-  <label>
-    <span>Edad (opcional pero recomendado)</span>
-    <input type="number" name="child_age" min="6" max="21"
-           value="{{ child_age or '' }}">
-    <small>La edad ayuda a la IA a calibrar el análisis.</small>
-  </label>
-
-  <button type="submit">Crear instancia y generar QR</button>
-</form>
 {% endblock %}

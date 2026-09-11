@@ -1,67 +1,113 @@
 {% extends "base.html" %}
-{% block title %}Panel — Antigrooming{% endblock %}
+{% block title %}Panel de Control — Antigrooming{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Panel</h1>
   <div>
-    <a href="{{ url_for('dashboard.alerts') }}" class="btn-secondary">Ver alertas</a>
-    <a href="{{ url_for('linking.new') }}" class="btn-primary">+ Vincular hijo/a</a>
+    <h1>Panel de Control</h1>
+    <p class="lead" style="margin: 0.25rem 0 0 0;">Gestión de conexiones familiares y supervisión de alertas de riesgo</p>
+  </div>
+  <div>
+    <a href="{{ url_for('dashboard.alerts') }}" class="btn-secondary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Ver Alertas
+    </a>
+    <a href="{{ url_for('linking.new') }}" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Vincular hijo/a
+    </a>
   </div>
 </div>
 
 {% if not children %}
-  <div class="empty">
-    <p>Todavía no vinculaste ningún WhatsApp de menor.</p>
-    <p>Antes de vincular, conversá con tu hijo/a: el sistema requiere su consentimiento para activarse.</p>
-    <a href="{{ url_for('linking.new') }}" class="btn-primary">Empezar vinculación</a>
+  <div class="empty card">
+    <div style="width: 56px; height: 56px; background: var(--primary-50); border-radius: 50%; color: var(--primary-600); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <h3 style="margin-bottom: 0.5rem;">No hay conexiones vinculadas aún</h3>
+    <p>Antes de comenzar, conversá con tu hijo/a: el sistema informará al menor y requerirá su consentimiento activo para iniciar la protección.</p>
+    <a href="{{ url_for('linking.new') }}" class="btn-primary">Iniciar primera vinculación</a>
   </div>
 {% else %}
-  <table class="listing">
-    <thead>
-      <tr>
-        <th>Alias</th>
-        <th>Edad</th>
-        <th>Estado</th>
-        <th>Consent.</th>
-        <th>Outbound</th>
-        <th>Alertas</th>
-        <th>Creado</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for child in children %}
-      {% set c = counts.get(child.id, {}) %}
-      <tr>
-        <td>{{ child.child_alias }}</td>
-        <td>{{ child.child_age or '—' }}</td>
-        <td><span class="status status-{{ child.status.value|lower }}">{{ child.status.value }}</span></td>
-        <td>
-          {% if child.has_active_consent %}
-            <span class="ok">✔</span>
-          {% else %}
-            <span class="warn">pendiente</span>
-          {% endif %}
-        </td>
-        <td>
-          {% if child.monitor_outbound %}<span class="ok">ON</span>
-          {% else %}<span class="warn">OFF</span>{% endif %}
-        </td>
-        <td>
-          {% if c.get('HIGH', 0) %}<span class="pill pill-high">{{ c['HIGH'] }} altas</span>{% endif %}
-          {% if c.get('MEDIUM', 0) %}<span class="pill pill-medium">{{ c['MEDIUM'] }} med</span>{% endif %}
-          {% if c.get('LOW', 0) %}<span class="pill pill-low">{{ c['LOW'] }} bajas</span>{% endif %}
-          {% if not c %}—{% endif %}
-        </td>
-        <td>{{ child.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td>
-          <a href="{{ url_for('linking.qr', child_id=child.id) }}">Config</a> ·
-          <a href="{{ url_for('dashboard.child_contacts', child_id=child.id) }}">Contactos</a> ·
-          <a href="{{ url_for('dashboard.alerts', child_id=child.id) }}">Alertas</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="listing">
+      <thead>
+        <tr>
+          <th>Menor</th>
+          <th>Edad</th>
+          <th>Estado WhatsApp</th>
+          <th>Consentimiento</th>
+          <th>Mensajes Salientes</th>
+          <th>Alertas Detectadas</th>
+          <th>Fecha Vinculación</th>
+          <th style="text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for child in children %}
+        {% set c = counts.get(child.id, {}) %}
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); color: var(--primary-700); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                {{ child.child_alias[:2]|upper }}
+              </div>
+              <div>
+                <strong style="color: var(--slate-900);">{{ child.child_alias }}</strong>
+                {% if child.linked_phone %}
+                  <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--slate-500);">{{ child.linked_phone }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </td>
+          <td>{{ child.child_age ~ ' años' if child.child_age else '—' }}</td>
+          <td>
+            <span class="status status-{{ child.status.value|lower }}">
+              {{ child.status|status_es }}
+            </span>
+          </td>
+          <td>
+            {% if child.has_active_consent %}
+              <span class="status status-connected" title="Consentimiento informado registrado">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Aceptado
+              </span>
+            {% else %}
+              <span class="status status-pending_consent">
+                Pendiente
+              </span>
+            {% endif %}
+          </td>
+          <td>
+            {% if child.monitor_outbound %}
+              <span class="pill pill-low" style="background-color: var(--success-50); color: var(--success-600); border-color: var(--success-100);">Activado</span>
+            {% else %}
+              <span class="pill pill-none">Desactivado</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+              {% if c.get('HIGH', 0) %}<span class="pill pill-high">{{ c['HIGH'] }} ALTA</span>{% endif %}
+              {% if c.get('MEDIUM', 0) %}<span class="pill pill-medium">{{ c['MEDIUM'] }} MEDIA</span>{% endif %}
+              {% if c.get('LOW', 0) %}<span class="pill pill-low">{{ c['LOW'] }} BAJA</span>{% endif %}
+              {% if not c %}<span style="color: var(--slate-400); font-size: 0.85rem;">0</span>{% endif %}
+            </div>
+          </td>
+          <td><small style="color: var(--slate-500);">{{ child.created_at.strftime('%d/%m/%Y') }}</small></td>
+          <td style="text-align: right; white-space: nowrap;">
+            <a href="{{ url_for('linking.qr', child_id=child.id) }}" class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.825rem;">Configurar / QR</a>
+            <a href="{{ url_for('dashboard.child_contacts', child_id=child.id) }}" class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.825rem;">Contactos</a>
+            <a href="{{ url_for('dashboard.alerts', child_id=child.id) }}" class="btn-primary" style="padding: 0.35rem 0.65rem; font-size: 0.825rem;">Alertas</a>
+            <form method="post" action="{{ url_for('linking.delete', child_id=child.id) }}" class="inline"
+                  onsubmit="return confirm('¿Estás seguro/a de que deseás eliminar definitivamente la conexión con {{ child.child_alias }}? Se cerrará la sesión de WhatsApp y se borrarán todos sus registros asociados.');">
+              <button type="submit" class="btn-danger" style="padding: 0.35rem 0.65rem; font-size: 0.825rem;" title="Eliminar conexión definitivamente">
+                Eliminar
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endif %}
 {% endblock %}

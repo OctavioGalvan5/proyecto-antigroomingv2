@@ -1,51 +1,76 @@
 {% extends "base.html" %}
-{% block title %}Mi monitoreo{% endblock %}
+{% block title %}Mi Monitoreo Seguro — Antigrooming{% endblock %}
 {% block content %}
-<h1>Hola 👋</h1>
-<p class="lead">Este es tu panel personal. Podés ver qué se está monitoreando y desactivarlo cuando quieras.</p>
+<div style="max-width: 640px; margin: 1.5rem auto;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); color: var(--primary-700); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; font-size: 1.5rem;">
+      🛡️
+    </div>
+    <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Hola, {{ child.child_alias }} 👋</h1>
+    <p class="lead" style="margin: 0;">Este es tu portal de transparencia. Aquí podés verificar qué supervisa la herramienta y desactivarla en cualquier momento.</p>
+  </div>
 
-<section class="card">
-  <h3>Estado</h3>
-  <ul class="kv">
-    <li>
-      <b>Monitoreo activo:</b>
-      {% if child.is_monitoring_active %}
-        <span class="pill pill-medium">SÍ</span>
-      {% else %}
-        <span class="pill pill-low">NO</span>
-      {% endif %}
-    </li>
-    <li><b>Vinculado a:</b> {{ child.linked_phone or 'aún no conectado' }}</li>
-    <li><b>Alias con el que te identifican:</b> {{ child.child_alias }}</li>
-    <li><b>Alertas generadas hasta ahora:</b> {{ total_alerts }}</li>
-    <li>
-      <b>Consentimiento:</b>
-      {% if child.has_active_consent %}
-        aceptado el {{ child.consent.accepted_at.strftime('%Y-%m-%d %H:%M') }} UTC
-      {% else %}
-        <span class="warn">revocado o pendiente</span>
-      {% endif %}
-    </li>
-  </ul>
-</section>
+  <section class="card">
+    <h3 style="font-size: 1.1rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.75rem;">
+      Estado de la Protección
+    </h3>
+    <ul class="kv">
+      <li>
+        <b>Supervisión Activa</b>
+        {% if child.is_monitoring_active %}
+          <span class="status status-connected">● Activa</span>
+        {% else %}
+          <span class="status status-disconnected">Desactivada</span>
+        {% endif %}
+      </li>
+      <li>
+        <b>Dispositivo Vinculado</b>
+        <span style="font-family: var(--font-mono); font-size: 0.85rem;">{{ child.linked_phone or 'Conexión en curso' }}</span>
+      </li>
+      <li>
+        <b>Alertas Emitidas a tus Tutores</b>
+        <span style="font-weight: 700; color: var(--slate-900);">{{ total_alerts }}</span>
+      </li>
+      <li>
+        <b>Consentimiento Informado</b>
+        <span style="font-size: 0.85rem;">
+          {% if child.has_active_consent %}
+            <span class="ok">Aceptado ({{ child.consent.accepted_at.strftime('%d/%m/%Y') }})</span>
+          {% else %}
+            <span class="warn">Revocado o pendiente</span>
+          {% endif %}
+        </span>
+      </li>
+    </ul>
+  </section>
 
-<section class="card">
-  <h3>Texto que aceptaste</h3>
-  <pre class="consent-text">{{ consent_text }}</pre>
-</section>
+  <section class="card">
+    <h3 style="font-size: 1.1rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.75rem;">
+      Compromiso y Texto que Aceptaste
+    </h3>
+    <pre class="consent-text" style="max-height: 240px;">{{ consent_text }}</pre>
+  </section>
 
-{% if child.has_active_consent %}
-<section class="card danger-zone">
-  <h3>Desactivar el monitoreo</h3>
-  <p>Si querés que el sistema deje de leer tus mensajes, apretá el botón. Se avisa a tus papás.</p>
-  <form method="post" action="{{ url_for('minor.revoke', token=child.minor_access_token) }}"
-        onsubmit="return confirm('¿Estás seguro/a? Va a apagarse el monitoreo y se les avisa a tus papás.');">
-    <label>
-      <span>¿Querés contar por qué? (opcional)</span>
-      <input type="text" name="reason" placeholder="Ej: prefiero hablarlo con mis papás">
-    </label>
-    <button type="submit" class="btn-danger">Desactivar monitoreo</button>
-  </form>
-</section>
-{% endif %}
+  {% if child.has_active_consent %}
+    <section class="card danger-zone">
+      <h3 style="font-size: 1.1rem; color: var(--danger-600);">
+        Desactivar la Supervisión
+      </h3>
+      <p style="font-size: 0.9rem; color: var(--slate-700); margin-bottom: 1rem;">
+        Si en algún momento no te sentís cómodo/a con la herramienta, tenés derecho a apagarla. Al confirmarlo, el sistema dejará de leer tus mensajes y se le enviará una notificación a tus tutores.
+      </p>
+      <form method="post" action="{{ url_for('minor.revoke', token=child.minor_access_token) }}"
+            onsubmit="return confirm('¿Querés desactivar el monitoreo? Tus tutores recibirán una notificación de esta acción.');"
+            class="form" style="margin: 0; max-width: 100%;">
+        <label>
+          <span>Motivo de la baja (opcional)</span>
+          <input type="text" name="reason" placeholder="Ej: Prefiero hablarlo directamente en familia">
+        </label>
+        <button type="submit" class="btn-danger" style="width: 100%; margin-top: 0.5rem;">
+          Desactivar Monitoreo Definitivamente
+        </button>
+      </form>
+    </section>
+  {% endif %}
+</div>
 {% endblock %}

@@ -206,6 +206,57 @@ def revoke(child_id: int):
     return redirect(url_for("dashboard.index"))
 
 
+@bp.route("/<int:child_id>/disconnect", methods=["POST"])
+@login_required
+def disconnect(child_id: int):
+    """Cierra la sesión de WhatsApp en Evolution API manteniendo los registros."""
+    child = _get_owned_child(child_id)
+
+    try:
+        EvolutionClient().logout(child.evolution_instance_name)
+        child.status = ChildStatus.DISCONNECTED
+        db.session.commit()
+        flash(f"Se ha cerrado la sesión de WhatsApp de {child.child_alias}.", "ok")
+    except EvolutionAPIError as exc:
+        if exc.status_code == 404:
+            child.status = ChildStatus.DISCONNECTED
+            db.session.commit()
+            flash(f"La sesión de WhatsApp de {child.child_alias} ya no estaba activa en el servidor.", "ok")
+        else:
+            logger.exception("Error al cerrar sesión en Evolution")
+            flash(f"No se pudo desconectar: {exc}", "error")
+
+    return redirect(url_for("linking.qr", child_id=child.id))
+
+
+@bp.route("/<int:child_id>/delete", methods=["POST"])
+@login_required
+def delete(child_id: int):
+    """Elimina definitivamente la instancia en Evolution API y borra la vinculación de la base de datos."""
+    child = _get_owned_child(child_id)
+    alias = child.child_alias
+
+    try:
+        EvolutionClient().delete_instance(child.evolution_instance_name)
+    except EvolutionAPIError:
+        logger.exception("Fallo al eliminar instancia en Evolution; se procede a eliminar en base de datos")
+
+    db.session.add(AuditLog(
+        actor_type=ActorType.USER, actor_id=g.user.id,
+        action="child_instance_deleted",
+        target_type="ChildInstance", target_id=child.id,
+        ip=request.remote_addr, user_agent=request.user_agent.string[:500],
+        audit_metadata={"alias": alias, "instance": child.evolution_instance_name},
+    ))
+
+    db.session.delete(child)
+    db.session.commit()
+
+    flash(f"La conexión con {alias} y todos sus datos asociados fueron eliminados.", "ok")
+    return redirect(url_for("dashboard.index"))
+
+
+
 # --------------------------------------------------------------------------- #
 
 def _get_owned_child(child_id: int) -> ChildInstance:

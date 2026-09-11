@@ -1,75 +1,123 @@
 {% extends "base.html" %}
-{% block title %}Escanear QR — {{ child.child_alias }}{% endblock %}
+{% block title %}Vincular WhatsApp — {{ child.child_alias }}{% endblock %}
 {% block content %}
-<h1>Vinculando: {{ child.child_alias }}</h1>
+<div class="page-head">
+  <div>
+    <h1>Vinculación: {{ child.child_alias }}</h1>
+    <p class="lead" style="margin: 0.25rem 0 0 0;">Seguí los dos pasos para activar la supervisión preventiva</p>
+  </div>
+  <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Volver al panel
+  </a>
+</div>
 
 <div class="two-col">
+  <!-- Paso 1: QR -->
   <section class="qr-panel">
-    <h2>1. Escanear con WhatsApp del menor</h2>
-    {% if qr_base64 %}
-      <img src="{{ qr_base64 if qr_base64.startswith('data:') else 'data:image/png;base64,' + qr_base64 }}"
-           alt="Código QR de vinculación"
-           class="qr-image">
-      <p class="hint">En el celular del menor: WhatsApp → menú → "Dispositivos vinculados" → Vincular un dispositivo.</p>
-    {% else %}
-      <p class="warn">No se pudo obtener el QR ahora. Recargá la página.</p>
-    {% endif %}
+    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
+      <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-500); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">1</span>
+      <h2 style="margin: 0; font-size: 1.25rem;">Escanear con WhatsApp</h2>
+    </div>
+    <p class="hint">Abrí WhatsApp en el teléfono del menor → Menú (tres puntos o Ajustes) → <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong>.</p>
 
-    <p>Estado de la conexión: <span id="conn-state" class="status">verificando…</span></p>
+    <div class="qr-image-wrapper">
+      {% if qr_base64 %}
+        <img src="{{ qr_base64 if qr_base64.startswith('data:') else 'data:image/png;base64,' + qr_base64 }}"
+             alt="Código QR de vinculación"
+             class="qr-image">
+      {% else %}
+        <div style="padding: 3rem 1rem; text-align: center; color: var(--warning-600);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p style="margin: 0.5rem 0 0 0; font-weight: 500;">Generando código QR... Si no aparece en unos segundos, recargá la página.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--slate-50); border-radius: var(--radius-sm); border: 1px solid var(--slate-200);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--slate-700);">Estado en tiempo real:</span>
+      <span id="conn-state" class="status status-pending_qr">Comprobando conexión...</span>
+    </div>
   </section>
 
+  <!-- Paso 2: Consentimiento -->
   <section class="consent-panel">
-    <h2>2. Consentimiento del menor</h2>
-    <p class="lead">Mostrale esta pantalla al menor y leela con él/ella:</p>
+    <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.5rem;">
+      <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-500); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">2</span>
+      <h2 style="margin: 0; font-size: 1.25rem;">Consentimiento del menor</h2>
+    </div>
+    <p class="hint">Leé este texto con el menor para garantizar un proceso transparente e informado:</p>
 
-    <pre class="consent-text">{{ minor_consent_text }}</pre>
+    <pre class="consent-text" style="max-height: 220px;">{{ minor_consent_text }}</pre>
 
     {% if child.has_active_consent %}
-      <p class="ok"><strong>Consentimiento aceptado el {{ child.consent.accepted_at.strftime('%Y-%m-%d %H:%M') }} UTC.</strong></p>
+      <div style="padding: 1rem; background: var(--success-50); border: 1px solid var(--success-100); border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem; color: var(--success-600);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div style="font-size: 0.9rem;">
+          <strong>Consentimiento registrado y activo</strong>
+          <div style="font-size: 0.8rem; color: var(--slate-600);">Aceptado el {{ child.consent.accepted_at.strftime('%d/%m/%Y a las %H:%M') }} UTC</div>
+        </div>
+      </div>
     {% else %}
-      <form method="post" action="{{ url_for('linking.consent', child_id=child.id) }}">
-        <label class="checkbox">
+      <form method="post" action="{{ url_for('linking.consent', child_id=child.id) }}" style="margin-top: 1rem;">
+        <label class="checkbox" style="margin-bottom: 1rem;">
           <input type="checkbox" name="accept_consent" required>
-          <span>El menor entendió y acepta.</span>
+          <span style="font-size: 0.9rem; font-weight: 600; color: var(--slate-800);">El menor comprende el funcionamiento y acepta el monitoreo.</span>
         </label>
-        <button type="submit">Registrar consentimiento</button>
+        <button type="submit" style="width: 100%;">Registrar Consentimiento Informado</button>
       </form>
     {% endif %}
   </section>
 </div>
 
-<hr>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; margin-top: 2rem;">
+  <section class="card" style="margin: 0;">
+    <h3 style="font-size: 1.05rem;">Supervisión de Mensajes Salientes</h3>
+    <p style="font-size: 0.9rem; color: var(--slate-600); margin-bottom: 1rem;">
+      Captura de mensajes enviados por el menor:
+      {% if child.monitor_outbound %}
+        <span class="ok">ACTIVADA</span>. Se analizan para comprender el contexto de la conversación (recomendado).
+      {% else %}
+        <span class="warn">DESACTIVADA</span>. Solo se procesan los mensajes que el menor recibe.
+      {% endif %}
+    </p>
+    <form method="post" action="{{ url_for('dashboard.child_toggle_outbound', child_id=child.id) }}">
+      <button type="submit" class="btn-secondary">
+        {% if child.monitor_outbound %}Desactivar mensajes salientes{% else %}Activar mensajes salientes{% endif %}
+      </button>
+    </form>
+  </section>
 
-<section class="card">
-  <h3>Configuración del monitoreo</h3>
-  <p>
-    <b>Captura de mensajes enviados por el menor:</b>
-    {% if child.monitor_outbound %}
-      <span class="ok">ACTIVADA</span> — mejora la detección de patrones bidireccionales.
-    {% else %}
-      <span class="warn">DESACTIVADA</span> — sólo se procesan mensajes entrantes.
-    {% endif %}
-  </p>
-  <form method="post" action="{{ url_for('dashboard.child_toggle_outbound', child_id=child.id) }}">
-    <button type="submit" class="btn-secondary">
-      {% if child.monitor_outbound %}Desactivar outbound{% else %}Activar outbound{% endif %}
+  <section class="card" style="margin: 0;">
+    <h3 style="font-size: 1.05rem;">Portal de Transparencia para el Menor</h3>
+    <p style="font-size: 0.9rem; color: var(--slate-600); margin-bottom: 0.5rem;">
+      Compartile este enlace personal a tu hijo/a para que pueda consultar el estado de su monitoreo y revocarlo si así lo desea:
+    </p>
+    {% set portal = request.host_url.rstrip('/') + url_for('minor.portal', token=child.minor_access_token) %}
+    <code class="link-box">{{ portal }}</code>
+  </section>
+</div>
+
+<!-- Opciones de desconexión y eliminación -->
+<div style="margin-top: 2.5rem; display: flex; justify-content: flex-end; gap: 1rem; align-items: center; border-top: 1px solid var(--slate-200); padding-top: 1.5rem;">
+  {% if child.status.value == 'CONNECTED' %}
+    <form method="post" action="{{ url_for('linking.disconnect', child_id=child.id) }}"
+          onsubmit="return confirm('¿Cerrar sesión de WhatsApp? Se mantendrán los registros históricos pero no se recibirán nuevos mensajes hasta volver a escanear.');"
+          class="inline">
+      <button type="submit" class="btn-secondary" style="font-size: 0.875rem;">
+        Cerrar sesión de WhatsApp
+      </button>
+    </form>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('linking.delete', child_id=child.id) }}"
+        onsubmit="return confirm('ATENCIÓN: Esto eliminará definitivamente la vinculación con {{ child.child_alias }}, cerrará la sesión de WhatsApp y borrará todos los registros históricos. ¿Continuar?');"
+        class="inline">
+    <button type="submit" class="btn-danger" style="font-size: 0.875rem;">
+      Eliminar conexión definitivamente
     </button>
   </form>
-</section>
-
-<section class="card">
-  <h3>Link para el menor</h3>
-  <p>Compartile este link a tu hijo/a. Le permite ver qué se está monitoreando y revocar el consentimiento cuando quiera.</p>
-  {% set portal = request.host_url.rstrip('/') + url_for('minor.portal', token=child.minor_access_token) %}
-  <code class="link-box">{{ portal }}</code>
-</section>
-
-<hr>
-
-<form method="post" action="{{ url_for('linking.revoke', child_id=child.id) }}"
-      onsubmit="return confirm('Esto elimina la instancia y borra el vínculo. ¿Continuar?');">
-  <button type="submit" class="btn-danger">Revocar vinculación</button>
-</form>
+</div>
 
 <script>
   async function poll() {
@@ -77,14 +125,24 @@
       const r = await fetch("{{ url_for('linking.status', child_id=child.id) }}");
       const s = await r.json();
       const el = document.getElementById('conn-state');
-      el.textContent = s.monitoring_active
-        ? 'monitoreo ACTIVO'
-        : `${s.child_status} / evolution=${s.evolution_state} / consent=${s.has_consent}`;
+      if (s.monitoring_active) {
+        el.className = 'status status-connected';
+        el.textContent = '● Monitoreo ACTIVO';
+      } else if (s.evolution_state === 'open' && !s.has_consent) {
+        el.className = 'status status-pending_consent';
+        el.textContent = 'WhatsApp conectado (esperando consentimiento)';
+      } else if (s.evolution_state === 'close') {
+        el.className = 'status status-disconnected';
+        el.textContent = 'WhatsApp desconectado';
+      } else {
+        el.className = 'status status-pending_qr';
+        el.textContent = 'Esperando escaneo de código QR...';
+      }
     } catch (e) {
-      /* ignoramos errores transitorios de polling */
+      /* polling silencioso */
     }
   }
   poll();
-  setInterval(poll, 4000);
+  setInterval(poll, 3500);
 </script>
 {% endblock %}
